@@ -16,6 +16,17 @@ static unsigned int get_hash(const hash* h, unsigned int key)
 
 	// ToDo: ハッシュ関数としてhash_funcを使った
 	// オープンアドレス法によるハッシュ値を求める
+	unsigned int index = hash_func(key, h->max_size);
+	const unsigned int start_index = index;
+
+	do {
+		if (h->nodes[index].key == ~0 || h->nodes[index].key == key) {
+			return index;
+		}
+
+		index = (index + 1) % h->max_size;
+	} while (index != start_index);
+
 	return ~0;
 }
 
@@ -59,16 +70,30 @@ bool add(hash* h, unsigned int key, const char* value)
 
 	// ToDo: ハッシュ関数としてhash_funcを使った
 	// オープンアドレス法によりキーを追加
-	return false;
+	unsigned int index = get_hash(h, key);
+
+	if (index == ~0 || h->nodes[index].key != ~0) {
+		return false;
+	}
+
+	h->nodes[index].key = key;
+	strncpy_s(h->nodes[index].value, sizeof(h->nodes[index].value), value, _TRUNCATE);
+
+	return true;
 }
 
 // keyの値を見てノードを検索して、値を取得する(なければNULLを返す)
 const char* get(const hash* h, unsigned int key)
 {
+	if (h == NULL) return NULL;
 	if (key == ~0) return NULL;
 
-	// ToDo: keyから値が格納されている場所を求め、値の場所を返す
-	return NULL;
+	unsigned int index = get_hash(h, key);
+	if (index == ~0 || h->nodes[index].key == ~0) {
+		return NULL;
+	}
+
+	return h->nodes[index].value;
 }
 
 // ハッシュの値を取得する(デバッグ用)
